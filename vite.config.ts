@@ -11,7 +11,7 @@ export default defineConfig({
     }),
     glsl(),
   ],
-  base: '/web_space_project/',
+  base: '/',
   build: {
     rollupOptions: {
       output: {
