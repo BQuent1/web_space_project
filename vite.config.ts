@@ -11,7 +11,7 @@ export default defineConfig({
     }),
     glsl(),
   ],
-  base: '/',
+  base: '/web_space_project/', // Assurez-vous que ce chemin correspond à votre dépôt GitHub Pages
   build: {
     rollupOptions: {
       output: {
