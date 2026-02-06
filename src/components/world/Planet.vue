@@ -2,11 +2,8 @@
 import { TextureLoader } from 'three'
 import { ref } from 'vue'
 
-// On crée le chargeur
 const loader = new TextureLoader()
 
-// On charge la texture (le chargement se fait en arrière-plan)
-// Utilise cette URL de test qui est très permissive :
 const mapUrl = '/textures/2k_earth_daymap.jpg'
 const normalMapUrl = '/textures/2k_earth_normal_map.jpg'
 const emissionMapUrl = '/textures/2k_earth_nightmap.jpg'
