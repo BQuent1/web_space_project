@@ -1,11 +1,16 @@
 const API_KEY = 'nN3wCQcOohEwA8xbWD00dTSOSSJ6EbWRHQS1u0aF';
 const BASE_URL = 'https://api.nasa.gov/neo/rest/v1';
 
+const AU_IN_KM = 149597870.7;
+
+// details : https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27DES=2015%20PU56%27&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27VECTORS%27&START_TIME=%272026-02-02%27&STOP_TIME=%272026-02-03%27
+
+
 export const nasaService = {
   async getAsteroids() {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const chaine = `${BASE_URL}/feed?start_date=2026-01-30&api_key=${API_KEY}`;
+      const chaine = `${BASE_URL}/feed?start_date=${today}&api_key=${API_KEY}`;
 
       console.log(chaine);
 
