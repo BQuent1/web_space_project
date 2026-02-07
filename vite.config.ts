@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import glsl from 'vite-plugin-glsl'
 import { templateCompilerOptions } from '@tresjs/core'
+import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,7 +12,12 @@ export default defineConfig({
     }),
     glsl(),
   ],
-  base: '/', // Assurez-vous que ce chemin correspond à votre dépôt GitHub Pages
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    },
+  },
+  base: '/',
   build: {
     rollupOptions: {
       output: {
@@ -22,6 +28,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['vue', 'three'],
+    exclude: ['vue', 'three', '@tresjs/core'],
   },
 })

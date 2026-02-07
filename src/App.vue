@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { nasaService } from './services/nasaApi.js'
 import SpaceScene from './components/SpaceScene.vue'
 
-const asteroidsList = ref([]) // Le tableau vide au début
+const asteroidsList = ref([])
 
 onMounted(async () => {
   asteroidsList.value = await nasaService.getAsteroids()

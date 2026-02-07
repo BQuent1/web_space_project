@@ -1,6 +1,10 @@
 <script setup>
 import { TextureLoader } from 'three'
 import { ref } from 'vue'
+// import { useFrame } from '@tresjs/core'
+import { useLoop } from '@tresjs/core'
+import { useTimeStore } from '../../stores/timeStore'
+
 
 const loader = new TextureLoader()
 
@@ -26,10 +30,34 @@ const emissionMap = loader.load(
   undefined,
   (err) => console.error('Erreur de chargement texture :', err)
 )
+
+const timeStore = useTimeStore()
+const EarthRef = ref()
+
+const { onBeforeRender } = useLoop()
+
+onBeforeRender(() => {
+  if (EarthRef.value) {
+    const date = timeStore.currentDate
+    const seconds = (date.getUTCHours() * 3600) + (date.getUTCMinutes() * 60) + date.getUTCSeconds()
+
+    const rotationY = (seconds / 86400) * Math.PI * 2 + Math.PI
+
+    EarthRef.value.rotation.y = rotationY
+  }
+})
+
+// onMounted(() => {
+//   if (EarthRef.value) {
+//     EarthRef.value.rotation.z = (23.5 * Math.PI) / 180
+//   }
+// })
+
+
 </script>
 
 <template>
-  <TresMesh>
+  <TresMesh ref="EarthRef">
     <TresSphereGeometry :args="[2, 64, 64]" />
     <TresMeshStandardMaterial :map="map" :normal-map="normalMap" :emissive-map="emissionMap" :emissive="0xffffff" :emissive-intensity="2"/>
   </TresMesh>
