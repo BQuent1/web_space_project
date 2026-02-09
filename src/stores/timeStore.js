@@ -4,7 +4,7 @@ export const useTimeStore = defineStore('time', {
   // données
   state: () => ({
     currentDate: new Date(),
-    multiplier: 3600, // vitesse
+    multiplier: 1, // vitesse
     isPaused: false,
   }),
 

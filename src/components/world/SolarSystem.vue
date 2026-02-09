@@ -13,7 +13,9 @@ onBeforeRender(({ delta }) => {
 </script>
 
 <template>
-  <Planet />
+  <Suspense>
+    <Planet />
+  </Suspense>
   <TresDirectionalLight :position="[0, 0, 50]" :intensity="2" />
   <!-- <TresAmbientLight :intensity="0.5" /> -->
 </template>

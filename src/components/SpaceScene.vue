@@ -7,10 +7,12 @@ import SolarSystem from './world/SolarSystem.vue'
 
 <template>
   <TresCanvas window-size>
-    <TresPerspectiveCamera :position="[0, 5, 10]" />
+    <TresPerspectiveCamera :position="[10, 5, 10]" />
     <OrbitControls />
 
-    <SolarSystem />
+    <Suspense>
+      <SolarSystem />
+    </Suspense>
 
     <Stars />
   </TresCanvas>
