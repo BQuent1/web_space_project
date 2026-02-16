@@ -10,7 +10,7 @@ export const nasaService = {
   async getAsteroids() {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const chaine = `${BASE_URL}/feed?start_date=${today}&api_key=${API_KEY}`;
+      const chaine = `${BASE_URL}/feed?start_date=${today}&end_date=${today}&api_key=${API_KEY}`;
 
       console.log(chaine);
 

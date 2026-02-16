@@ -12,7 +12,8 @@ export const useTimeStore = defineStore('time', {
   // données
   state: () => ({
     currentDate: new Date(),
-    multiplier: 604800, // vitesse
+    multiplier: 1, // vitesse
+    currentLabel: '1s',
     isPaused: false,
     earthPosition: {
       x: 150,
@@ -38,6 +39,9 @@ export const useTimeStore = defineStore('time', {
     },
     updateEarthPosition(x, y, z) {
       this.earthPosition = { x, y, z }
+    },
+    updateCurrentDate(date) {
+      this.currentDate = date
     },
   },
 })
