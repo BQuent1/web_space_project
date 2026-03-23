@@ -3,6 +3,7 @@ import { useLoop, useTresContext } from '@tresjs/core'
 import { useTimeStore } from '@/stores/timeStore'
 import { ref } from 'vue'
 import Planet from './Planet.vue'
+import Asteroid from './Asteroid.vue'
 import { watchEffect } from 'vue';
 
 
@@ -25,6 +26,10 @@ onBeforeRender(({ delta }) => {
 
 })
 
+const onAsteroidClick = (asteroidData) => {
+  console.log('Clicked on Asteroid:', asteroidData)
+  // Plus tard: centrer la caméra et ouvrir panneau
+}
 </script>
 
 <template>
@@ -33,6 +38,14 @@ onBeforeRender(({ delta }) => {
   </Suspense>
 
   <TresGroup ref="targetRef" />
+
+  <Asteroid 
+    v-for="(asteroid, index) in timeStore.asteroids" 
+    :key="asteroid.id"
+    :data="asteroid"
+    :index="index"
+    @click="onAsteroidClick"
+  />
 
   <TresDirectionalLight 
     :position="[0, 0, 0]" 

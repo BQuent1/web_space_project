@@ -20,10 +20,14 @@ export const useTimeStore = defineStore('time', {
       y: 0,
       z: 0,
     },
+    asteroids: [],
   }),
 
   // méthodes
   actions: {
+    setAsteroids(data) {
+      this.asteroids = data
+    },
     setSpeed(value) {
       this.multiplier = value
     },

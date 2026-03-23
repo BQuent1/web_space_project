@@ -17,6 +17,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    proxy: {
+      '/api/horizons.api': {
+        target: 'https://ssd.jpl.nasa.gov',
+        changeOrigin: true,
+      }
+    }
+  },
   base: '/',
   build: {
     rollupOptions: {

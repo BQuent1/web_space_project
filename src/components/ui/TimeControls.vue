@@ -8,9 +8,10 @@ const asteriodPoints = ref([])
 
 onMounted(async () => {
   const data = await nasaService.getAsteroids()
+  timeStore.setAsteroids(data)
 
   asteriodPoints.value = data.map(a => {
-    const approachDateFull = a.close_approach_data[0].close_approach_date_full
+    const approachDateFull = a.approachDateFull
     console.log(approachDateFull)
     const dateObj = new Date(approachDateFull)
     const minutes = (dateObj.getHours() * 60) + dateObj.getMinutes()
