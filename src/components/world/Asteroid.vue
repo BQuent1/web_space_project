@@ -3,36 +3,33 @@ import { computed, ref } from 'vue'
 import { useTimeStore } from '@/stores/timeStore'
 
 const props = defineProps({
-  position: Object,
+  position: Object, // passed but now dynamically computed
   size: Number,
   data: Object,
   index: Number,
 })
 
 const timeStore = useTimeStore()
-const isVisible = ref(true)
-const MAX_VISIBLE_DISTANCE_KM = 50000000 // 50 millions km
+const MAX_VISIBLE_DISTANCE_KM = 15000000 // 15 million km
+const SCALE_UNIT = 100000 // 1 unit = 100k km
 
-const position = computed(() => {
+// Local coordinate calculation
+const positionValues = computed(() => {
   const ephemeris = props.data.ephemeris;
   if (!ephemeris || ephemeris.length === 0) {
-    isVisible.value = false;
-    return [0, 0, 0];
+    return { localPos: [0, 0, 0], isVisible: false };
   }
 
   const currentDateMs = timeStore.currentDate.getTime()
   
-  // Find surrounding ephemeris points (this assumes the array is sorted by timestamp)
   let p1 = ephemeris[0];
   let p2 = ephemeris[ephemeris.length - 1];
 
-  // If outside bounds, hide or clamp. Let's clamp to closest known point and stay there
   if (currentDateMs <= p1.timestamp) {
     p2 = p1;
   } else if (currentDateMs >= p2.timestamp) {
     p1 = p2;
   } else {
-    // Find exact interpolation interval
     for (let i = 0; i < ephemeris.length - 1; i++) {
       if (currentDateMs >= ephemeris[i].timestamp && currentDateMs <= ephemeris[i+1].timestamp) {
         p1 = ephemeris[i];
@@ -42,7 +39,6 @@ const position = computed(() => {
     }
   }
 
-  // Linear interpolation setup
   let ratio = 0;
   if (p2.timestamp !== p1.timestamp) {
     ratio = (currentDateMs - p1.timestamp) / (p2.timestamp - p1.timestamp);
@@ -53,34 +49,54 @@ const position = computed(() => {
   const exactY_km = p1.y + (p2.y - p1.y) * ratio;
   const exactZ_km = p1.z + (p2.z - p1.z) * ratio;
 
-  // Visibility check
   const distanceToEarth = Math.sqrt(exactX_km * exactX_km + exactY_km * exactY_km + exactZ_km * exactZ_km);
-  isVisible.value = distanceToEarth < MAX_VISIBLE_DISTANCE_KM;
-
-  // Scaling to TresJS scene units (1 unit = 1 million km)
-  // Mapping NASA ecliptic (X, Y, Z) to ThreeJS (X, Z, -Y) mapping logic:
-  // Usually ThreeJS Y is Up. Horizons Z is Up. 
-  // tres.x = horizon.x
-  // tres.y = horizon.z 
-  // tres.z = -horizon.y
   
-  const scaleUnit = 1000000;
+  // La contrainte de visibilité se fait maintenant par rapport à l'heure d'approche
+  const approachDateMs = new Date(props.data.approachDateFull).getTime();
+  const diffHours = Math.abs(currentDateMs - approachDateMs) / (1000 * 60 * 60);
   
-  const tresX = exactX_km / scaleUnit;
-  const tresY = exactZ_km / scaleUnit;
-  const tresZ = -exactY_km / scaleUnit;
+  // Affiche l'astéroïde s'il est dans une fenêtre de +/- 12 heures de son approche la plus proche
+  const isVisible = diffHours < 12;
+  
+  // Mapping NASA ecliptic (X, Y, Z) to ThreeJS (X, Z, -Y) mapping logic relative to Earth
+  const tresX = exactX_km / SCALE_UNIT;
+  const tresY = exactZ_km / SCALE_UNIT;
+  const tresZ = -exactY_km / SCALE_UNIT;
 
-  // Offset by the Earth current dynamic position to represent the actual World coordinate
+  return { localPos: [tresX, tresY, tresZ], isVisible };
+})
+
+const rootPosition = computed(() => {
   return [
-    tresX + timeStore.earthPosition.x,
-    tresY + timeStore.earthPosition.y,
-    tresZ + timeStore.earthPosition.z
+    timeStore.earthPosition.x,
+    timeStore.earthPosition.y,
+    timeStore.earthPosition.z
   ]
 })
 
+const orbitVertices = computed(() => {
+  const ephemeris = props.data.ephemeris;
+  if (!ephemeris || ephemeris.length === 0) return new Float32Array(0);
+
+  const vertices = new Float32Array(ephemeris.length * 3);
+  for (let i = 0; i < ephemeris.length; i++) {
+    const pt = ephemeris[i];
+    vertices[i * 3]     = pt.x / SCALE_UNIT;
+    vertices[i * 3 + 1] = pt.z / SCALE_UNIT;
+    vertices[i * 3 + 2] = -pt.y / SCALE_UNIT;
+  }
+  return vertices;
+})
+
 const scale = computed(() => {
-  const s = props.data.size / 100
-  return Math.max(0.5, Math.min(s, 5.0))
+  // taille réelle en mètres -> kilomètres (/1000)
+  const sizeKm = props.data.size / 1000;
+  // Converti en unités TresJS (1u = 100000km) avec un boost x500
+  const sizeUnits = (sizeKm / SCALE_UNIT) * 500;
+  
+  // Taille minimum pour garantir la visibilité, même pour un caillou de 10m
+  const clamped = Math.max(0.1, sizeUnits);
+  return [clamped, clamped, clamped]
 })
 const emit = defineEmits(['click'])
 
@@ -90,8 +106,15 @@ const onClick = () => {
 </script>
 
 <template>
-  <TresMesh v-if="isVisible" :position="position" :scale="scale" @click="onClick">
-    <TresDodecahedronGeometry :args="[1, 0]" />
-    <TresMeshToonMaterial :color="data.isDangerous ? '#ff6600' : '#888888'" />
-  </TresMesh>
+  <TresGroup :position="rootPosition">
+    <TresLine v-if="orbitVertices.length > 0">
+      <TresBufferGeometry :position="[orbitVertices, 3]" />
+      <TresLineBasicMaterial :color="0xffffff" :transparent="true" :opacity="0.8" />
+    </TresLine>
+
+    <TresMesh v-if="positionValues.isVisible" :position="positionValues.localPos" :scale="scale" @click="onClick">
+      <TresDodecahedronGeometry :args="[1, 0]" />
+      <TresMeshToonMaterial :color="data.isDangerous ? '#ff6600' : '#bbbbbb'" />
+    </TresMesh>
+  </TresGroup>
 </template>

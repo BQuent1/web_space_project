@@ -84,7 +84,7 @@ onBeforeRender(({ delta }) => {
     const date = timeStore.currentDate
     
     // 1. CALCUL DE L'ORBITE (Position de la Terre autour du Soleil)
-    const distanceToSun = 150
+    const distanceToSun = 1496 // 149.6 millions km / 100,000
     const startOfYear = new Date(date.getFullYear(), 0, 1)
     const diffInMs = date.getTime() - startOfYear.getTime()
     const dayOfYear = diffInMs / (1000 * 60 * 60 * 24)
@@ -116,7 +116,9 @@ onBeforeRender(({ delta }) => {
       const lunarCycleMs = 29.53059 * 24 * 60 * 60 * 1000
       const lunarPhaseAngle = (msSinceNewMoon / lunarCycleMs) * Math.PI * 2
       
-      const distEarthMoon = 8
+      // Vraie distance: 384,400km = 3.84 unités. 
+      // Mais avec la Terre gonflée x50 (rayon 3.19), la Lune toucherait la Terre. On multiplie la distance par 10 pour le compromis visuel !
+      const distEarthMoon = 38.4
       MoonRef.value.position.x = Math.cos(lunarPhaseAngle) * distEarthMoon
       MoonRef.value.position.z = Math.sin(lunarPhaseAngle) * distEarthMoon
       
@@ -134,23 +136,26 @@ onBeforeRender(({ delta }) => {
 })
 </script>
 
- <!-- 1 unité = 1 million de km -->
+ <!-- Échelle : 1 unité = 100 000 km -->
 <template>
   <TresGroup ref="AxialTiltRef">
     <TresMesh ref="EarthRef" :position="[0, 0, 0]">
-      <TresSphereGeometry :args="[2, 64, 64]" />
+      <!-- Terre : rayon réel 6371km. ×50 = r3.19 -->
+      <TresSphereGeometry :args="[3.19, 64, 64]" />
       <TresMeshStandardMaterial :map="map" :normal-map="normalMap" :emissive-map="emissionMap" :emissive="0xffffff" :emissive-intensity="2"/>
 
       <!-- <primitive :object="new THREE.AxesHelper(5)" /> -->
-      <TresMesh ref="MoonRef" :position="[3.8, 0, 0]">
-        <TresSphereGeometry :args="[0.5, 32, 32]" />
+      <TresMesh ref="MoonRef" :position="[38.4, 0, 0]">
+        <!-- Lune : rayon réel 1737km. ×50 = r0.87 -->
+        <TresSphereGeometry :args="[0.87, 32, 32]" />
         <TresMeshStandardMaterial :map="moonMap" />
       </TresMesh>
     </TresMesh>
   </TresGroup>
 
   <TresMesh :position="[0, 0, 0]">
-    <TresSphereGeometry :args="[5, 64, 64]" />
+    <!-- Soleil : rayon réel 696,340km. Rendu à l'échelle 1:1 = r6.96 -->
+    <TresSphereGeometry :args="[6.96, 64, 64]" />
     <TresMeshStandardMaterial :map="sunMap" :emissive-map="sunEmissionMap" :emissive="0xffffff" :emissive-intensity="5" />
   </TresMesh>
 

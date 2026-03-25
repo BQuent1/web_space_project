@@ -6,13 +6,18 @@ import { nasaService } from '@/services/nasaApi'
 const timeStore = useTimeStore()
 const asteriodPoints = ref([])
 
-onMounted(async () => {
-  const data = await nasaService.getAsteroids()
+const getLocalDayString = (d) => {
+  return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+}
+
+let lastLoadedDay = '';
+
+const loadAsteroidsForDate = async (date) => {
+  const data = await nasaService.getAsteroids(date)
   timeStore.setAsteroids(data)
 
   asteriodPoints.value = data.map(a => {
     const approachDateFull = a.approachDateFull
-    console.log(approachDateFull)
     const dateObj = new Date(approachDateFull)
     const minutes = (dateObj.getHours() * 60) + dateObj.getMinutes()
 
@@ -20,8 +25,29 @@ onMounted(async () => {
       id: a.id,
       name: a.name,
       time: minutes,
+      asteroidData: a
     }
   })
+}
+
+const onDotClick = (pt) => {
+  timeStore.isPaused = true;
+  currentMinutes.value = pt.time;
+}
+
+onMounted(() => {
+  lastLoadedDay = getLocalDayString(timeStore.currentDate);
+  loadAsteroidsForDate(timeStore.currentDate);
+})
+
+import { watch } from 'vue'
+
+watch(() => timeStore.currentDate, (newDate) => {
+  const newDay = getLocalDayString(newDate);
+  if (newDay !== lastLoadedDay) {
+    lastLoadedDay = newDay;
+    loadAsteroidsForDate(newDate);
+  }
 })
 
 const currentMinutes = computed({
@@ -78,7 +104,9 @@ const formattedDate = computed({
           <span v-for="i in 24" :key="i" class="dot-gray"></span>
         </div>
 
-        <div v-for="pt in asteriodPoints" :key="pt.id" class="dot-red" :style="{ left: (pt.time / 1440) * 100 + '%' }">
+        <div v-for="pt in asteriodPoints" :key="pt.id" class="dot-red" 
+             :style="{ left: (pt.time / 1440) * 100 + '%' }"
+             @click="onDotClick(pt)">
         </div>
 
         <div class="time-pin" :style="{ left: (currentMinutes / 1440) * 100 + '%' }">
@@ -268,12 +296,19 @@ const formattedDate = computed({
 
 .dot-red {
   position: absolute;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   background: #d9534f;
   border-radius: 50%;
   z-index: 2;
   transform: translateX(-50%);
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.dot-red:hover {
+  transform: translateX(-50%) scale(1.5);
+  background: #ff3333;
 }
 
 /* Le curseur style Pin gris */

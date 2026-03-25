@@ -5,25 +5,24 @@ const AU_IN_KM = 149597870.7;
 
 // details : https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27DES=2015%20PU56%27&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27VECTORS%27&START_TIME=%272026-02-02%27&STOP_TIME=%272026-02-03%27
 
-let cachedAsteroidsPromise = null;
+const asteroidCache = new Map();
 
 export const nasaService = {
-  getAsteroids() {
-    if (cachedAsteroidsPromise) {
-      return cachedAsteroidsPromise;
+  getAsteroids(baseDate = new Date()) {
+    const todayStr = baseDate.toISOString().split('T')[0];
+
+    if (asteroidCache.has(todayStr)) {
+      return asteroidCache.get(todayStr);
     }
 
-    cachedAsteroidsPromise = (async () => {
+    const promise = (async () => {
       try {
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
-
-        const tomorrow = new Date(today);
+        const tomorrow = new Date(baseDate);
         tomorrow.setDate(tomorrow.getDate() + 2);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
         const chaine = `${BASE_URL}/feed?start_date=${todayStr}&end_date=${todayStr}&api_key=${API_KEY}`;
-        console.log("Fetching asteroids list...");
+        console.log(`Fetching asteroids list for ${todayStr}...`);
 
         const response = await fetch(chaine);
         const data = await response.json();
@@ -59,13 +58,14 @@ export const nasaService = {
 
         return asteroidsWithEphemeris;
       } catch (error) {
-        cachedAsteroidsPromise = null; // Réinitialiser en cas d'erreur
-        console.error("Erreur globale lors de la récupération des astéroïdes:", error);
+        asteroidCache.delete(todayStr); // Réinitialiser en cas d'erreur
+        console.error(`Erreur globale pour la date ${todayStr}:`, error);
         return [];
       }
     })();
 
-    return cachedAsteroidsPromise;
+    asteroidCache.set(todayStr, promise);
+    return promise;
   },
 
   /**
