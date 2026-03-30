@@ -3,6 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useTimeStore } from './stores/timeStore'
 import { nasaService } from './services/nasaApi.js'
 import SpaceScene from './components/SpaceScene.vue'
+import ObjectDetails from './components/ui/ObjectDetails.vue'
 
 const asteroidsList = ref([])
 const timeStore = useTimeStore()
@@ -33,4 +34,5 @@ watch(() => timeStore.currentDate, async (newDate) => {
 
 <template>
   <SpaceScene :asteroids="asteroidsList" />
+  <ObjectDetails />
 </template>

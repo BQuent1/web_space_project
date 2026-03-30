@@ -21,10 +21,17 @@ export const useTimeStore = defineStore('time', {
       z: 0,
     },
     asteroids: [],
+    selectedAsteroid: null,
   }),
 
   // méthodes
   actions: {
+    setSelectedAsteroid(data) {
+      this.selectedAsteroid = data
+    },
+    clearSelectedAsteroid() {
+      this.selectedAsteroid = null
+    },
     setAsteroids(data) {
       this.asteroids = data
     },

@@ -156,7 +156,7 @@ onBeforeRender(({ delta }) => {
   <TresMesh :position="[0, 0, 0]">
     <!-- Soleil : rayon réel 696,340km. Rendu à l'échelle 1:1 = r6.96 -->
     <TresSphereGeometry :args="[6.96, 64, 64]" />
-    <TresMeshStandardMaterial :map="sunMap" :emissive-map="sunEmissionMap" :emissive="0xffffff" :emissive-intensity="5" />
+    <TresMeshStandardMaterial :map="sunMap" :emissive-map="sunEmissionMap" :emissive="0xffffff" :emissive-intensity="100" />
   </TresMesh>
 
 </template>

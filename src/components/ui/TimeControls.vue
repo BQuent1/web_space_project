@@ -33,6 +33,7 @@ const loadAsteroidsForDate = async (date) => {
 const onDotClick = (pt) => {
   timeStore.isPaused = true;
   currentMinutes.value = pt.time;
+  timeStore.setSelectedAsteroid(pt.asteroidData);
 }
 
 onMounted(() => {

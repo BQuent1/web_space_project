@@ -28,7 +28,7 @@ onBeforeRender(({ delta }) => {
 
 const onAsteroidClick = (asteroidData) => {
   console.log('Clicked on Asteroid:', asteroidData)
-  // Plus tard: centrer la caméra et ouvrir panneau
+  timeStore.setSelectedAsteroid(asteroidData)
 }
 </script>
 
