@@ -1,36 +1,28 @@
 <script setup>
 import { TextureLoader } from 'three'
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import { useLoop } from '@tresjs/core'
 import { useTimeStore } from '../../stores/timeStore'
 import { onMounted } from 'vue'
 import { MathUtils } from 'three'
 import * as THREE from 'three' // Importe THREE pour accéder au Helper
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-const loader = new TextureLoader()
+const loader = new THREE.TextureLoader()
 
-// earth textures
-const mapUrl = '/textures/2k_earth_daymap.jpg'
-const normalMapUrl = '/textures/2k_earth_normal_map.jpg'
-const emissionMapUrl = '/textures/2k_earth_nightmap.jpg'
-
-const map = loader.load(
-  mapUrl,
-  (tex) => console.warn('Texture chargée avec succès !'),
+// Load the custom Earth model en tâche de fond pour éviter un crash serveur (Suspense)
+const earthModelScene = shallowRef(null)
+const gltfLoader = new GLTFLoader()
+gltfLoader.load(
+  '/models/cartoon_earth.glb',
+  (gltf) => {
+    earthModelScene.value = gltf.scene;
+    console.log("Terre 3D chargée avec succès !");
+  },
   undefined,
-  (err) => console.error('Erreur de chargement texture :', err)
-)
-const normalMap = loader.load(
-  normalMapUrl,
-  (tex) => console.warn('Texture normale chargée avec succès !'),
-  undefined,
-  (err) => console.error('Erreur de chargement texture :', err)
-)
-const emissionMap = loader.load(
-  emissionMapUrl,
-  (tex) => console.warn('Texture émissive chargée avec succès !'),
-  undefined,
-  (err) => console.error('Erreur de chargement texture :', err)
+  (error) => {
+    console.error("Erreur durant le chargement de cartoon_earth.glb", error);
+  }
 )
 
 // sun texture
@@ -139,10 +131,9 @@ onBeforeRender(({ delta }) => {
  <!-- Échelle : 1 unité = 100 000 km -->
 <template>
   <TresGroup ref="AxialTiltRef">
-    <TresMesh ref="EarthRef" :position="[0, 0, 0]">
-      <!-- Terre : rayon réel 6371km. ×50 = r3.19 -->
-      <TresSphereGeometry :args="[3.19, 64, 64]" />
-      <TresMeshStandardMaterial :map="map" :normal-map="normalMap" :emissive-map="emissionMap" :emissive="0xffffff" :emissive-intensity="2"/>
+    <TresGroup ref="EarthRef" :position="[0, 0, 0]">
+      <!-- Terre personnalisée (modèle GLTF) chargée asynchroneusement -->
+      <primitive v-if="earthModelScene" :object="earthModelScene" :scale="[3.19, 3.19, 3.19]" />
 
       <!-- <primitive :object="new THREE.AxesHelper(5)" /> -->
       <TresMesh ref="MoonRef" :position="[38.4, 0, 0]">
@@ -150,7 +141,7 @@ onBeforeRender(({ delta }) => {
         <TresSphereGeometry :args="[0.87, 32, 32]" />
         <TresMeshStandardMaterial :map="moonMap" />
       </TresMesh>
-    </TresMesh>
+    </TresGroup>
   </TresGroup>
 
   <TresMesh :position="[0, 0, 0]">

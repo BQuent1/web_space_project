@@ -30,11 +30,16 @@ const closePanel = () => {
 
     <div class="description">
       <p><strong>Vitesse relative :</strong> {{ parseInt(timeStore.selectedAsteroid.velocity).toLocaleString() }} km/h</p>
-      <p><strong>Diamètre estimé :</strong> {{ ~~(timeStore.selectedAsteroid.size) }} mètres</p>
+      <p>
+        <strong>Diamètre estimé :</strong> {{ ~~(timeStore.selectedAsteroid.size) }} mètres
+        <span class="scale-info" v-if="timeStore.selectedAsteroid.displayMultiplier">
+          (Affiché ×{{ timeStore.selectedAsteroid.displayMultiplier.toLocaleString() }})
+        </span>
+      </p>
       <p><strong>Distance de la Terre :</strong> {{ parseInt(timeStore.selectedAsteroid.distance).toLocaleString() }} km (environ {{ ((parseInt(timeStore.selectedAsteroid.distance) * 1000) / 105).toLocaleString() }} terrains de foot)</p>
       <div class="divider"></div>
       <p v-if="timeStore.selectedAsteroid.isDangerous" class="danger-text">Cet objet est classifié comme potentiellement dangereux par la NASA car il croise l'orbite terrestre de très près et possède une taille significative.</p>
-      <p v-else>Cet astéroïde passera à une distance de sécurité raisonnable et ne présente aucun risque de collision avec la Terre pour cette période.</p>
+      <p v-else>Cet astéroïde passera à une distance de sécurité raisonnable et ne présente aucun risque de collision pour cette période.</p>
     </div>
   </div>
 </template>
@@ -44,12 +49,13 @@ const closePanel = () => {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 320px;
-  background: white;
+  width: 330px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  font-family: sans-serif;
+  font-family: 'Inter', sans-serif;
   color: #333;
   z-index: 200;
   pointer-events: auto;
@@ -110,6 +116,14 @@ const closePanel = () => {
 
 .description p {
   margin: 5px 0;
+}
+
+.scale-info {
+  display: block;
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+  margin-top: 2px;
 }
 
 .divider {

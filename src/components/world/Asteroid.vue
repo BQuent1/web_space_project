@@ -39,7 +39,7 @@ watch(() => timeStore.currentDate, () => {
 const { onBeforeRender } = useLoop()
 
 onBeforeRender(({ delta, elapsed }) => {
-  const mScale = scale.value[0];
+  const mScale = scaleInfo.value.vec[0];
 
   // Animation du Halo (Scintillement)
   if (haloRef.value) {
@@ -145,34 +145,45 @@ const orbitVertices = computed(() => {
   return vertices;
 })
 
-const scale = computed(() => {
-  // taille réelle en mètres -> kilomètres (/1000)
+const scaleInfo = computed(() => {
   const sizeKm = props.data.size / 1000;
-  // Converti en unités TresJS (1u = 100000km) avec un boost x500
-  const sizeUnits = (sizeKm / SCALE_UNIT) * 500;
+  const trueSizeUnits = sizeKm / SCALE_UNIT;
+  const sizeUnits = trueSizeUnits * 500;
   
-  // Taille minimum pour garantir la visibilité, même pour un caillou de 10m
+  // Augmentation de la taille minimum visible
   const clamped = Math.max(0.1, sizeUnits);
-  return [clamped, clamped, clamped]
+  
+  // Différence d'échelle réelle demandée
+  const multiplier = Math.round(clamped / trueSizeUnits);
+  
+  return {
+    vec: [clamped, clamped, clamped],
+    multiplier: multiplier
+  };
 })
 const emit = defineEmits(['click'])
 
 const isSelected = computed(() => timeStore.selectedAsteroid?.id === props.data.id)
 
+const isHovered = ref(false)
+const onPointerEnter = () => { isHovered.value = true; document.body.style.cursor = 'pointer'; }
+const onPointerLeave = () => { isHovered.value = false; document.body.style.cursor = 'auto'; }
+
 const onClick = () => {
-  emit('click', props.data)
+  const augmentedData = { ...props.data, displayMultiplier: scaleInfo.value.multiplier };
+  emit('click', augmentedData)
 }
 </script>
 
 <template>
   <TresGroup :position="rootPosition">
-    <TresLine v-if="orbitVertices.length > 0">
+    <TresLine v-if="orbitVertices.length > 0" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave">
       <TresBufferGeometry :position="[orbitVertices, 3]" />
-      <TresLineBasicMaterial :color="0xffffff" :transparent="true" :opacity="0.8" />
+      <TresLineBasicMaterial :color="isHovered ? '#ffffff' : (data.isDangerous ? '#ff9999' : '#cccccc')" :transparent="true" :opacity="isHovered ? 1.0 : 0.6" />
     </TresLine>
 
     <TresGroup v-if="positionValues.isVisible" :position="positionValues.localPos">
-      <TresMesh :scale="scale" @click="onClick">
+      <TresMesh :scale="scaleInfo.vec" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave">
         <TresDodecahedronGeometry :args="[1, 0]" />
         <TresMeshToonMaterial :color="data.isDangerous ? '#ff6600' : '#bbbbbb'" />
       </TresMesh>

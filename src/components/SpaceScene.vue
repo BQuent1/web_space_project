@@ -85,7 +85,7 @@ watch(() => timeStore.earthPosition, (earthPos) => {
         <SolarSystem />
       </Suspense>
 
-      <Stars :radius="3000" :depth="600" :count="20000" />
+      <Stars :radius="5000" :depth="1000" :count="20000" />
 
     </TresCanvas>
     <TimeControls class="ui-layer" />
