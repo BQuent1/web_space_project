@@ -75,7 +75,7 @@ export const nasaService = {
   async getAsteroidEphemeris(designation, startDate, endDate) {
     const safeDesignation = encodeURIComponent(`DES=${designation}`);
     // Utilisation du proxy Vite configuré dans vite.config.ts pour éviter les erreurs CORS
-    const url = `/api/horizons.api?format=text&COMMAND='${safeDesignation}'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='${startDate}'&STOP_TIME='${endDate}'&STEP_SIZE='1 h'&CENTER='399'&CSV_FORMAT='YES'`;
+    const url = `https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='${safeDesignation}'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='${startDate}'&STOP_TIME='${endDate}'&STEP_SIZE='1 h'&CENTER='399'&CSV_FORMAT='YES'`;
 
     const response = await fetch(url);
     if (!response.ok) throw new Error("Erreur l'API Horizons");
