@@ -131,77 +131,76 @@ export const nasaService = {
   */
 
   async getAsteroidEphemeris(designation, startDate, endDate) {
-    // 1. On prépare les paramètres proprement. 
-    // La NASA attend souvent les valeurs entre apostrophes, mais le tout doit être encodé.
+    // 1. Nettoyage de la désignation (ex: "2024 UT4" -> "2024 UT4")
+    // NASA veut : COMMAND='DES=2024 UT4'
     const command = `DES=${designation}`;
 
-    const params = new URLSearchParams({
-      format: 'text',
-      COMMAND: `'${command}'`, // La NASA veut des apostrophes autour de la commande
-      OBJ_DATA: "'NO'",
-      MAKE_EPHEM: "'YES'",
-      EPHEM_TYPE: "'VECTORS'",
-      START_TIME: `'${startDate}'`,
-      STOP_TIME: `'${endDate}'`,
-      STEP_SIZE: "'1 h'",
-      CENTER: "'399'",
-      CSV_FORMAT: "'YES'"
-    });
+    // On construit l'URL NASA brute SANS encodage manuel des apostrophes ici
+    const nasaBaseUrl = "https://ssd.jpl.nasa.gov/api/horizons.api";
+    const queryParams = [
+      `format=text`,
+      `COMMAND='${command}'`,
+      `OBJ_DATA='NO'`,
+      `MAKE_EPHEM='YES'`,
+      `EPHEM_TYPE='VECTORS'`,
+      `START_TIME='${startDate}'`,
+      `STOP_TIME='${endDate}'`,
+      `STEP_SIZE='1 h'`,
+      `CENTER='399'`,
+      `CSV_FORMAT='YES'`
+    ].join('&');
 
-    const apiPath = `/api/horizons.api?${params.toString()}`;
-    const targetUrl = `https://ssd.jpl.nasa.gov${apiPath}`;
+    const targetUrl = `${nasaBaseUrl}?${queryParams}`;
 
-    // 2. Sélection de l'URL selon l'environnement
-    // Note: AllOrigins /raw est souvent instable. corsproxy.io est une excellente alternative.
+    // 2. Utilisation d'un autre proxy si corsproxy.io bloque
+    // On essaie 'cors-anywhere' ou simplement on change la structure pour corsproxy
     const url = import.meta.env.DEV
-      ? apiPath
+      ? `/api/horizons.api?${queryParams}` // Utilise ton proxy Vite
       : `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
     try {
       const response = await fetch(url);
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+      // Si 403, on tente une alternative de secours
+      if (response.status === 403 && !import.meta.env.DEV) {
+        console.warn("Corsproxy.io a renvoyé une 403, tentative avec AllOrigins...");
+        const altUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+        const altResp = await fetch(altUrl);
+        if (!altResp.ok) throw new Error("Tous les proxys ont échoué");
+        return this.parseNasaResponse(await altResp.text(), designation);
       }
+
+      if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
 
       const text = await response.text();
+      return this.parseNasaResponse(text, designation);
 
-      // 3. Extraction des données
-      const soeIndex = text.indexOf('$$SOE');
-      const eoeIndex = text.indexOf('$$EOE');
+    } catch (error) {
+      console.error(`Erreur éphéméride pour ${designation}:`, error);
+      throw error;
+    }
+  },
 
-      if (soeIndex === -1 || eoeIndex === -1) {
-        console.warn("Pas de données SOE/EOE trouvées pour", designation);
-        // Log du texte pour debug si nécessaire
-        return [];
-      }
+  parseNasaResponse(text, designation) {
+    const soeIndex = text.indexOf('$$SOE');
+    const eoeIndex = text.indexOf('$$EOE');
 
-      // On récupère les lignes entre les marqueurs
-      const dataBlock = text.slice(soeIndex + 5, eoeIndex).trim();
-      const lines = dataBlock.split('\n');
+    if (soeIndex === -1 || eoeIndex === -1) return [];
 
-      return lines.map(line => {
+    const dataBlock = text.slice(soeIndex + 5, eoeIndex).trim();
+    return dataBlock.split('\n')
+      .map(line => {
         const parts = line.split(',').map(s => s.trim());
-
         if (parts.length >= 5) {
-          const jd = parseFloat(parts[0]);
-          // Conversion précise JD vers Unix Timestamp (ms)
-          const timestampMs = (jd - 2440587.5) * 86400000;
-
           return {
-            timestamp: timestampMs,
+            timestamp: (parseFloat(parts[0]) - 2440587.5) * 86400000,
             x: parseFloat(parts[2]),
             y: parseFloat(parts[3]),
             z: parseFloat(parts[4])
           };
         }
         return null;
-      }).filter(item => item !== null);
-
-    } catch (error) {
-      console.error(`Erreur éphéméride pour ${designation}:`, error);
-      throw error;
-    }
+      })
+      .filter(item => item !== null);
   }
 }
-
