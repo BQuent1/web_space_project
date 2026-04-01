@@ -2,14 +2,16 @@
 import { TresCanvas } from '@tresjs/core'
 import { Stars, OrbitControls } from '@tresjs/cientos'
 import SolarSystem from './world/SolarSystem.vue'
+// @ts-ignore
 import { useTimeStore } from '@/stores/timeStore'
 import TimeControls from './ui/TimeControls.vue'
 import { ref, watch } from 'vue'
+// @ts-ignore
 import { getAsteroidTresPosition } from '@/utils/ephemerisUtils'
 
 const timeStore = useTimeStore()
 const cameraRef = ref()
-const orbitTarget = ref([150, 0, 0])
+const orbitTarget = ref<[number, number, number]>([150, 0, 0])
 
 let initialized = false;
 let lastFocusPos = { x: 0, y: 0, z: 0 };
