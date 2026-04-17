@@ -1,6 +1,14 @@
-# space-tres-project
+# WWD - Will We Die
 
 > A TresJS Vue application
+
+WWD est un projet de carte 3D interactive du système soleil-terre-lune en temps réel. Développé en Vue, il permet d'interroger une API de la NASA (NeoWs) permettant de récupèrer la liste des astéroïdes passant les plus proches de la Terre ainsi que leurs données associées (vitesse, distance, taille, etc.)
+
+J'interroge ensuite pour chaque astéroïde une autre application fournie par la NASA (JPL Horizons system) permettant de récupérer les orbites et les directions des roches.
+Vous pouvez alors filtrer les astéroïdes reçu, cliquer dessus pour afficher leurs détails et même prévoir les prochaines approches en choisissant la date.
+
+Bref amusez vous en voyageant à 60 000 000 km de la Terre et appelez moi si jamais il y en a un qui s'approche un peu trop ☄️
+
 
 ## Features
 
