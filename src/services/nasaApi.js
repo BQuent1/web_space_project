@@ -7,16 +7,6 @@ const AU_IN_KM = 149597870.7;
 
 const asteroidCache = new Map();
 
-const fetchWithProxy = async (targetUrl) => {
-  // AllOrigins "raw" permet de récupérer le contenu tel quel
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-
-  const response = await fetch(proxyUrl);
-  if (!response.ok) throw new Error(`Proxy error: ${response.status}`);
-  return response;
-};
-
-
 export const nasaService = {
   getAsteroids(baseDate = new Date()) {
     const todayStr = baseDate.toISOString().split('T')[0];
