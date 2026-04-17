@@ -10,38 +10,46 @@ import { defineStore } from 'pinia'
 
 export const useTimeStore = defineStore('time', {
   // données
-  state: () => ({
-    currentDate: new Date(),
-    multiplier: 1, // vitesse
-    currentLabel: '1s',
-    isPaused: false,
-    earthPosition: {
-      x: 150,
-      y: 0,
-      z: 0,
-    },
-    asteroids: [],
-    selectedAsteroid: null,
-    isLoading: false,
-    showFilters: false,
-    bounds: {
-      minDiameter: 0,
-      maxDiameter: 5000,
-      minSpeed: 0,
-      maxSpeed: 150000,
-      minDistance: 0,
-      maxDistance: 75
-    },
-    filters: {
-      minDiameter: 0,
-      maxDiameter: 5000,
-      minSpeed: 0,
-      maxSpeed: 150000,
-      minDistance: 0,
-      maxDistance: 75000000, // 75 million km
-      showDangerousOnly: false
-    }
-  }),
+  state: () => {
+    let savedFilters = null;
+    try {
+      const stored = localStorage.getItem('wwd_filters');
+      if (stored) savedFilters = JSON.parse(stored);
+    } catch(e) {}
+
+    return {
+      currentDate: new Date(),
+      multiplier: 1, // vitesse
+      currentLabel: '1s',
+      isPaused: false,
+      earthPosition: {
+        x: 150,
+        y: 0,
+        z: 0,
+      },
+      asteroids: [],
+      selectedAsteroid: null,
+      isLoading: false,
+      showFilters: false,
+      bounds: {
+        minDiameter: 0,
+        maxDiameter: 5000,
+        minSpeed: 0,
+        maxSpeed: 150000,
+        minDistance: 0,
+        maxDistance: 75
+      },
+      filters: savedFilters || {
+        minDiameter: 0,
+        maxDiameter: 5000,
+        minSpeed: 0,
+        maxSpeed: 150000,
+        minDistance: 0,
+        maxDistance: 75000000, // 75 million km
+        showDangerousOnly: false
+      }
+    };
+  },
 
   getters: {
     countFilteredAsteroids(state) {
@@ -62,7 +70,8 @@ export const useTimeStore = defineStore('time', {
   // méthodes
   actions: {
     setFilters(newFilters) {
-      this.filters = { ...this.filters, ...newFilters }
+      this.filters = { ...this.filters, ...newFilters };
+      localStorage.setItem('wwd_filters', JSON.stringify(this.filters));
     },
     resetFilters(b) {
       this.filters = {
@@ -70,7 +79,8 @@ export const useTimeStore = defineStore('time', {
         minSpeed: b.minSpeed, maxSpeed: b.maxSpeed,
         minDistance: b.minDistance, maxDistance: b.maxDistance,
         showDangerousOnly: false
-      }
+      };
+      localStorage.removeItem('wwd_filters');
     },
     setSelectedAsteroid(data) {
       this.selectedAsteroid = data

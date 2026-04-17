@@ -1,5 +1,6 @@
 <script setup>
-const emit = defineEmits(['start'])
+import { useRouter } from 'vue-router'
+const router = useRouter()
 </script>
 
 <template>
@@ -14,7 +15,7 @@ const emit = defineEmits(['start'])
         Identifiez leurs orbites, leurs distances et tailles réelles !
       </p>
 
-      <button class="start-button" @click="emit('start')">
+      <button class="start-button" @click="router.push('/explore')">
         Lancer l'exploration
       </button>
     </div>
