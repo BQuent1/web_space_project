@@ -212,7 +212,8 @@ const onClick = () => {
 
     <TresGroup v-if="positionValues.isVisible" :position="positionValues.localPos">
       <primitive v-if="asteroidModelScene" :object="asteroidModelScene" :scale="scaleInfo.vec" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave" />
-      <!-- <TresMesh v-else :scale="scaleInfo.vec" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave">
+      <!-- au cas ou pas de modèle 3D -->
+      <TresMesh v-else :scale="scaleInfo.vec" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave">
         <TresSphereGeometry :args="[1, 6, 6]" />
         <TresMeshStandardMaterial 
           :flat-shading="true"
@@ -222,7 +223,7 @@ const onClick = () => {
           :roughness-map="lavaRoughness"
           :ao-map="lavaAO"
         />
-      </TresMesh> -->
+      </TresMesh>
       
 
       <!-- Particules customisées (traînées orientées) -->

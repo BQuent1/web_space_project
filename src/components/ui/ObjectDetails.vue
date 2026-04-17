@@ -1,17 +1,24 @@
 <script setup>
 import { useTimeStore } from '@/stores/timeStore'
+import { ref, watch } from 'vue'
 
 const timeStore = useTimeStore()
+const isMinimized = ref(false)
 
-const closePanel = () => {
+watch(() => timeStore.selectedAsteroid, () => {
+  isMinimized.value = false;
+})
+
+const untrackAsteroid = () => {
   timeStore.clearSelectedAsteroid()
 }
 </script>
 
 <template>
-  <div v-if="timeStore.selectedAsteroid" class="details-panel">
-    <button class="close-btn" @click="closePanel">✕</button>
-    <h2 class="title">{{ timeStore.selectedAsteroid.name }}</h2>
+  <div v-if="timeStore.selectedAsteroid">
+    <div v-if="!isMinimized" class="details-panel">
+      <button class="close-btn" @click="isMinimized = true" title="Réduire">_</button>
+      <h2 class="title">{{ timeStore.selectedAsteroid.name }}</h2>
     
     <div class="card">
       <div class="card-row">
@@ -39,7 +46,22 @@ const closePanel = () => {
       <p><strong>Distance de la Terre :</strong> {{ parseInt(timeStore.selectedAsteroid.distance).toLocaleString() }} km (environ {{ ((parseInt(timeStore.selectedAsteroid.distance) * 1000) / 105).toLocaleString() }} terrains de foot)</p>
       <div class="divider"></div>
       <p v-if="timeStore.selectedAsteroid.isDangerous" class="danger-text">Cet objet est classifié comme potentiellement dangereux par la NASA car il croise l'orbite terrestre de très près et possède une taille significative.</p>
-      <p v-else>Cet astéroïde passera à une distance de sécurité raisonnable et ne présente aucun risque de collision pour cette période.</p>
+    <p v-else>Cet astéroïde passera à une distance de sécurité raisonnable et ne présente aucun risque de collision pour cette période.</p>
+    </div>
+    
+      <button class="untrack-button" @click="untrackAsteroid">
+        Retourner à la Terre
+      </button>
+    </div>
+
+    <!-- Mode minimisé -->
+    <div v-else class="minimized-panel" @click="isMinimized = false" title="Agrandir">
+      <span class="mini-info">{{ timeStore.selectedAsteroid.name }}</span>
+      <button class="untrack-btn-mini" @click.stop="untrackAsteroid" title="Retourner à la Terre"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- svg de croix pour fermer -->
+        <path d="M18 6L6 18M6 6L18 18" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+</button>
     </div>
   </div>
 </template>
@@ -74,14 +96,16 @@ const closePanel = () => {
 
 .close-btn {
   position: absolute;
-  top: 15px;
+  top: 6px;
   right: 15px;
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  line-height: 1;
   font-weight: bold;
   cursor: pointer;
   color: #666;
+  padding: 0;
 }
 
 .close-btn:hover {
@@ -147,5 +171,73 @@ const closePanel = () => {
   color: #d9534f;
   font-weight: bold;
   margin-top: 10px !important;
+}
+
+.untrack-button {
+  background: rgba(154, 156, 157, 0.9);
+  color: black;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 10px;
+  width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background 0.2s;
+}
+.untrack-button:hover {
+  background: rgba(178, 179, 180, 0.9);
+}
+
+.minimized-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 8px 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  font-family: 'Inter', sans-serif;
+  color: #333;
+  z-index: 200;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+.minimized-panel:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mini-info {
+  white-space: nowrap;
+}
+
+.untrack-btn-mini {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.untrack-btn-mini:hover {
+  transform: scale(1.15);
+}
+
+@media (max-width: 768px) {
+  .minimized-panel {
+    top: 65px;
+    right: 10px;
+  }
 }
 </style>
