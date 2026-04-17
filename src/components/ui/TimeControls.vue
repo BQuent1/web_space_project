@@ -426,4 +426,65 @@ const formattedDate = computed({
   height: 100%;
   z-index: 4;
 }
+
+@media (max-width: 768px) {
+  .ui-layer {
+    position: fixed;
+    top: 10px;
+    bottom: 20px;
+    left: 5px;
+    right: 5px;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .timeline-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin: 0;
+    padding: 6px 15px;
+    box-sizing: border-box;
+  }
+  .control-box {
+    height: 40px;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+  .btn-text {
+    font-size: 0.8rem;
+  }
+  .btn-text svg {
+    margin-right: 3px !important;
+    width: 16px;
+    height: 16px;
+  }
+  .icon-btn {
+    padding: 0 8px;
+  }
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .date-input {
+    font-size: 0.75rem;
+  }
+  .time-selector-container {
+    gap: 2px;
+  }
+  .time-selector-container .label {
+    display: none;
+  }
+  .current-value {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+  .filters-wrapper {
+    position: static;
+  }
+}
 </style>

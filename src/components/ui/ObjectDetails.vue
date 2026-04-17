@@ -49,16 +49,27 @@ const closePanel = () => {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 330px;
-  background: rgba(255, 255, 255, 0.95);
+  width: 280px;
+  background: rgba(255, 255, 255, 0.80);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  padding: 20px;
+  padding: 15px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   font-family: 'Inter', sans-serif;
   color: #333;
   z-index: 200;
   pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .details-panel {
+    top: 65px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
 }
 
 .close-btn {

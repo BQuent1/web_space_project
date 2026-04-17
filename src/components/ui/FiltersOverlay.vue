@@ -74,6 +74,16 @@ const updateFilter = (key, value) => {
   pointer-events: auto;
   cursor: default;
 }
+@media (max-width: 768px) {
+  .filters-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 350px;
+  }
+}
 h3 { margin-top: 0; margin-bottom: 20px; font-weight: 900; color: #111; font-size: 1.2rem; }
 .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; font-size: 0.9rem; font-weight: bold; color: #333; }
 

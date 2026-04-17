@@ -1,5 +1,31 @@
+<script>
+import { TextureLoader, MeshStandardMaterial } from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js'
+
+const textureLoader = new TextureLoader()
+const lavaColor = textureLoader.load('/textures/lava_rocks_01_2k/lava_rocks_01_color_2k.png')
+const lavaNormal = textureLoader.load('/textures/lava_rocks_01_2k/lava_rocks_01_normal_gl_2k.png')
+const lavaRoughness = textureLoader.load('/textures/lava_rocks_01_2k/lava_rocks_01_roughness_2k.png')
+const lavaAO = textureLoader.load('/textures/lava_rocks_01_2k/lava_rocks_01_ambient_occlusion_2k.png')
+
+const gltfLoader = new GLTFLoader()
+const asteroidFiles = [
+  '/models/asteroids_models/Asteroid_1a.glb',
+  '/models/asteroids_models/Asteroid_1b.glb',
+  '/models/asteroids_models/Asteroid_1c.glb',
+  '/models/asteroids_models/Asteroid_1e.glb',
+  '/models/asteroids_models/Asteroid_2a.glb',
+  '/models/asteroids_models/Asteroid_2b.glb',
+  '/models/asteroids_models/Asteroid_2c.glb'
+]
+const loadedModels = []
+asteroidFiles.forEach(file => {
+  gltfLoader.load(file, (gltf) => { loadedModels.push(gltf.scene) })
+})
+</script>
 <script setup>
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, watch, onMounted, onUnmounted } from 'vue'
 import { useTimeStore } from '@/stores/timeStore'
 import { getAsteroidTresPosition } from '@/utils/ephemerisUtils'
 import { useLoop } from '@tresjs/core'
@@ -24,7 +50,6 @@ const particlesData = Array.from({ length: 15 }, () => ({
   speed: 0.5 + Math.random()
 }))
 
-const haloRef = ref(null)
 const asteroidDir = new Vector3(0, 0, 0)
 
 watch(() => timeStore.currentDate, () => {
@@ -38,18 +63,28 @@ watch(() => timeStore.currentDate, () => {
 
 const { onBeforeRender } = useLoop()
 
+
+const asteroidModelScene = shallowRef(null)
+let retryTimer = null;
+
+const assignRandomModel = () => {
+  if (loadedModels.length > 0) {
+    const hash = (props.data.id || "0").split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const index = hash % loadedModels.length;
+    
+    const clonedScene = SkeletonUtils.clone(loadedModels[index]);
+    
+    asteroidModelScene.value = clonedScene;
+  } else {
+    retryTimer = setTimeout(assignRandomModel, 300);
+  }
+};
+
+onMounted(() => assignRandomModel())
+onUnmounted(() => { if(retryTimer) clearTimeout(retryTimer) })
+
 onBeforeRender(({ delta, elapsed }) => {
   const mScale = scaleInfo.value.vec[0];
-
-  // Animation du Halo (Scintillement)
-  if (haloRef.value) {
-    const pulse = Math.sin(elapsed * 5) * 0.05 + 0.7; // taille entre 0.65 et 0.75
-    const s = mScale * 1.5 * pulse;
-    haloRef.value.scale.setScalar(s);
-    if(haloRef.value.material) {
-      haloRef.value.material.opacity = 0.3 + (Math.sin(elapsed * 8) * 0.2);
-    }
-  }
 
   if (!isSelected.value || !particleRefs.value.length) return;
 
@@ -85,12 +120,10 @@ onBeforeRender(({ delta, elapsed }) => {
     if (mesh.material) {
       mesh.material.opacity = p.life * 0.8;
     }
-    // Commence gros puis rétrécit pour mourir (flamme pointue)
     mesh.scale.setScalar(p.life * mScale * 1.2);
   });
 })
 
-// Local coordinate calculation
 const positionValues = computed(() => {
   const ephemeris = props.data.ephemeris;
   if (!ephemeris || ephemeris.length === 0) {
@@ -103,21 +136,17 @@ const positionValues = computed(() => {
     return { localPos: [0, 0, 0], isVisible: false };
   }
 
-  // Calculate pure distance for visibility
   const SCALE_UNIT = 100000;
   const exactX_km = localPos.x * SCALE_UNIT;
   const exactZ_km = localPos.y * SCALE_UNIT;
   const exactY_km = -localPos.z * SCALE_UNIT;
   const distanceToEarth = Math.sqrt(exactX_km*exactX_km + exactY_km*exactY_km + exactZ_km*exactZ_km);
 
-  // La contrainte de visibilité se fait maintenant par rapport à l'heure d'approche
   const approachDateMs = new Date(props.data.approachDateFull).getTime();
   const diffHours = Math.abs(currentDateMs - approachDateMs) / (1000 * 60 * 60);
   
-  // Affiche l'astéroïde s'il est dans une fenêtre de +/- 12 heures de son approche la plus proche
   const isVisible = diffHours < 12;
 
-  // On vérifie tout de même qu'il soit sélectionné : Si sélectionné au panneau, on veut toujours le voir à l'écran. 
   const isSelected = timeStore.selectedAsteroid && timeStore.selectedAsteroid.id === props.data.id;
 
   return { localPos: [localPos.x, localPos.y, localPos.z], isVisible: isVisible || isSelected };
@@ -153,7 +182,6 @@ const scaleInfo = computed(() => {
   // Augmentation de la taille minimum visible
   const clamped = Math.max(0.1, sizeUnits);
   
-  // Différence d'échelle réelle demandée
   const multiplier = Math.round(clamped / trueSizeUnits);
   
   return {
@@ -183,21 +211,19 @@ const onClick = () => {
     </TresLine>
 
     <TresGroup v-if="positionValues.isVisible" :position="positionValues.localPos">
-      <TresMesh :scale="scaleInfo.vec" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave">
-        <TresDodecahedronGeometry :args="[1, 0]" />
-        <TresMeshToonMaterial :color="data.isDangerous ? '#ff6600' : '#bbbbbb'" />
-      </TresMesh>
-      
-      <!-- Halo "nuage" scintillant -->
-      <TresMesh ref="haloRef">
-        <TresSphereGeometry :args="[1, 16, 16]" />
-        <TresMeshBasicMaterial 
-          :color="data.isDangerous ? '#ff2200' : '#ffaa00'" 
-          :transparent="true" 
-          :blending="AdditiveBlending" 
-          :depthWrite="false" 
+      <primitive v-if="asteroidModelScene" :object="asteroidModelScene" :scale="scaleInfo.vec" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave" />
+      <!-- <TresMesh v-else :scale="scaleInfo.vec" @click="onClick" @pointer-enter="onPointerEnter" @pointer-leave="onPointerLeave">
+        <TresSphereGeometry :args="[1, 6, 6]" />
+        <TresMeshStandardMaterial 
+          :flat-shading="true"
+          :color="data.isDangerous ? '#ff8844' : '#aaaaaa'" 
+          :map="lavaColor"
+          :normal-map="lavaNormal"
+          :roughness-map="lavaRoughness"
+          :ao-map="lavaAO"
         />
-      </TresMesh>
+      </TresMesh> -->
+      
 
       <!-- Particules customisées (traînées orientées) -->
       <TresGroup v-if="isSelected">
